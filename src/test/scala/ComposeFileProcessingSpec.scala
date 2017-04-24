@@ -206,11 +206,24 @@ class ComposeFileProcessingSpec extends FunSuite with BeforeAndAfter with OneIns
     val composeYaml = composeMock.readComposeFile(composeFilePath)
     composeMock.processCustomTags(null, Seq.empty, composeYaml)
     val modifiedVolumesPaths = composeYaml.filter(_._1 == "testservice").head._2.get(composeMock.volumesKey).asInstanceOf[util.List[String]]
-    assert(modifiedVolumesPaths.size() == 3)
+    assert(modifiedVolumesPaths.size() == 4)
     assert(modifiedVolumesPaths.get(0) == s"$composeFileDir${File.separator}data:/data")
-    assert(modifiedVolumesPaths.get(1) == "/absolute/path/1")
-    assert(modifiedVolumesPaths.get(2) == "/absolute/path/2:/mounted/elsewhere")
+    assert(modifiedVolumesPaths.get(1) == s"$composeFileDir${File.separator}data:/data:ro")
+    assert(modifiedVolumesPaths.get(2) == "/absolute/path/1")
+    assert(modifiedVolumesPaths.get(3) == "/absolute/path/2:/mounted/elsewhere")
   }
+
+
+  test("Validate that relative volume settings throw exception when no dest path is defined") {
+    val (composeMock, composeFilePath) = getComposeFileMock("invalid_volumes.yml")
+    val composeFileDir = composeFilePath.substring(0, composeFilePath.lastIndexOf(File.separator))
+
+    val composeYaml = composeMock.readComposeFile(composeFilePath)
+    intercept[IllegalArgumentException] {
+      composeMock.processCustomTags(null, Seq.empty, composeYaml)
+    }
+  }
+
 
   test("Validate that the env_file settings gets updated with the fully qualified path") {
     val (composeMock, composeFilePath) = getComposeFileMock("env_file.yml")
